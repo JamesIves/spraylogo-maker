@@ -41,10 +41,6 @@ Save the spray and put `tempdecal.wad` in the game's folder, such as `cstrike` f
 > [!NOTE]
 > GoldSrc sprays are a single image with up to 255 colours and one transparent colour, and no more than 14,336 pixels. Some servers only accept 64 × 64, which works everywhere.
 
-## Contributing 🛠️
-
-Development setup, the project's structure and coding standards are in [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## Acknowledgements 📚
 
 - [VTFLib and VTFEdit](https://github.com/NeilJed/VTFLib), the reference for the VTF header layout, formats and flags.
