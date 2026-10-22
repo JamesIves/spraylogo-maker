@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spraylogo Maker</title>
+    <meta
+      name="description"
+      content="Turn images, GIFs and videos into sprays for Source and GoldSrc games. Runs in your browser; nothing is uploaded."
+    />
+    <meta name="theme-color" content="#16191b" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/spray-icon.png" />
+  </head>
+  <body>
+    <h1 class="logo">
+      <img class="logo__icon" src="/spray-icon.png" alt="" width="64" height="64" />
+      Spraylogo Maker
+    </h1>
+
+    <form class="window" id="settings" autocomplete="off">
+      <div class="window__title">Create Spray</div>
+
+      <div class="window__body">
+        <section class="viewer" aria-label="Preview">
+          <div class="viewer__canvas" id="drop-target">
+            <div class="viewer__empty" id="dropzone">
+              <p>Drop an image, GIF or video here.</p>
+              <p class="dim">PNG, JPG, GIF, WebP, TGA, MP4, WebM, VTF or WAD</p>
+              <button type="button" class="button" id="choose-files">Open...</button>
+            </div>
+            <canvas id="preview" hidden></canvas>
+            <p class="viewer__busy" id="busy" hidden>Encoding...</p>
+          </div>
+
+          <div class="viewer__controls" id="transport" hidden>
+            <button
+              type="button"
+              class="button button--icon"
+              id="play"
+              aria-label="Pause"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path class="icon-pause" d="M4 3h3v10H4zM9 3h3v10H9z" />
+                <path class="icon-play" d="M4 2.5v11l9-5.5z" />
+              </svg>
+            </button>
+            <span class="viewer__frame" id="frame-label">Frame 1 of 1</span>
+            <label class="viewer__mip">
+              <span>Mipmap</span>
+              <input type="range" id="mip-level" min="0" max="0" value="0" step="1" />
+              <output id="mip-label"></output>
+            </label>
+          </div>
+
+          <div class="meter" id="meter" hidden>
+            <div class="meter__text">
+              <span><strong id="meter-used">0 KB</strong> of</span>
+              <label data-show="source">
+                <span class="visually-hidden">Size limit</span>
+                <select name="limit" class="meter__limit">
+                  <option value="modern">512 KB</option>
+                  <option value="legacy">120 KB (older games)</option>
+                </select>
+              </label>
+              <span data-show="goldsrc" id="meter-pixel-limit"></span>
+            </div>
+            <span class="meter__bar"
+              ><span class="meter__fill" id="meter-fill"></span
+            ></span>
+          </div>
+
+          <div class="filmstrip-panel" id="filmstrip-panel" hidden>
+            <p class="dim" id="filmstrip-note"></p>
+            <ol class="filmstrip" id="filmstrip"></ol>
+          </div>
+
+          <dl class="facts" id="facts"></dl>
+        </section>
+
+        <section class="sheet">
+          <div class="tabs" role="tablist" aria-label="Settings">
+            <button
+              type="button"
+              role="tab"
+              id="tab-image"
+              aria-controls="panel-image"
+              aria-selected="true"
+            >
+              Image
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-colour"
+              aria-controls="panel-colour"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Colour
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-format"
+              aria-controls="panel-format"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Format
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-mipmaps"
+              aria-controls="panel-mipmaps"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Mipmaps
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-animation"
+              aria-controls="panel-animation"
+              aria-selected="false"
+              tabindex="-1"
+              hidden
+            >
+              Animation
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-advanced"
+              aria-controls="panel-advanced"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Advanced
+            </button>
+          </div>
+
+          <div class="panel" role="tabpanel" id="panel-image" aria-labelledby="tab-image">
+            <label class="row">
+              <span>Engine</span>
+              <select name="engine">
+                <option value="source">Source (VTF)</option>
+                <option value="goldsrc">GoldSrc (tempdecal.wad)</option>
+              </select>
+            </label>
+            <label class="row">
+              <span>Spray type</span>
+              <select name="recipe">
+                <option value="still">Still image</option>
+                <option value="animated" data-engine="source">Animated</option>
+                <option value="fading" data-engine="source">Fading</option>
+                <option value="pixel">Pixel art</option>
+              </select>
+            </label>
+            <label class="row">
+              <span>Size</span>
+              <select name="size"></select>
+            </label>
+            <div class="row" role="radiogroup" aria-labelledby="fit-label">
+              <span id="fit-label">Fit</span>
+              <div class="choices">
+                <label class="choice"
+                  ><input type="radio" name="fit" value="cover" checked />Crop to
+                  fill</label
+                >
+                <label class="choice"
+                  ><input type="radio" name="fit" value="contain" />Fit inside</label
+                >
+                <label class="choice"
+                  ><input type="radio" name="fit" value="stretch" />Stretch</label
+                >
+              </div>
+            </div>
+            <label class="row row--range">
+              <span>Zoom</span>
+              <input type="range" name="zoom" min="100" max="400" step="5" value="100" />
+              <output data-unit="%">100%</output>
+            </label>
+            <label class="row row--range">
+              <span>Horizontal</span>
+              <input type="range" name="offsetX" min="-100" max="100" value="0" />
+              <output>0</output>
+            </label>
+            <label class="row row--range">
+              <span>Vertical</span>
+              <input type="range" name="offsetY" min="-100" max="100" value="0" />
+              <output>0</output>
+            </label>
+            <label class="row">
+              <span>Resize filter</span>
+              <select name="resizeFilter">
+                <option value="catrom">Catmull-Rom</option>
+                <option value="lanczos">Lanczos</option>
+                <option value="mitchell">Mitchell</option>
+                <option value="triangle">Triangle</option>
+                <option value="box">Box</option>
+                <option value="point">Point</option>
+              </select>
+            </label>
+            <p class="note" data-show="goldsrc">
+              GoldSrc sprays are a single image of up to 14,336 pixels. 64 × 64 works on
+              every server.
+            </p>
+          </div>
+
+          <div
+            class="panel"
+            role="tabpanel"
+            id="panel-colour"
+            aria-labelledby="tab-colour"
+            hidden
+          >
+            <label class="row row--range">
+              <span>Brightness</span>
+              <input type="range" name="brightness" min="-100" max="100" value="0" />
+              <output>0</output>
+            </label>
+            <label class="row row--range">
+              <span>Contrast</span>
+              <input type="range" name="contrast" min="-100" max="100" value="0" />
+              <output>0</output>
+            </label>
+            <label class="row row--range">
+              <span>Saturation</span>
+              <input type="range" name="saturation" min="-100" max="100" value="0" />
+              <output>0</output>
+            </label>
+            <label class="row row--range">
+              <span>Sharpen</span>
+              <input
+                type="range"
+                name="imageSharpen"
+                min="0"
+                max="200"
+                step="5"
+                value="0"
+              />
+              <output data-unit="%">0%</output>
+            </label>
+            <label class="row" data-show="source">
+              <span>Background</span>
+              <input type="color" name="background" value="#000000" />
+            </label>
+            <p class="note">
+              Compression makes flat, low contrast areas blocky, so a little extra
+              contrast and sharpening helps.
+            </p>
+          </div>
+
+          <div
+            class="panel"
+            role="tabpanel"
+            id="panel-format"
+            aria-labelledby="tab-format"
+            hidden
+          >
+            <label class="row" data-show="source">
+              <span>Format</span>
+              <select name="format">
+                <option value="auto">Auto (DXT1 or DXT5)</option>
+                <optgroup label="Compressed">
+                  <option value="13">DXT1</option>
+                  <option value="20">DXT1 with 1-bit alpha</option>
+                  <option value="14">DXT3</option>
+                  <option value="15">DXT5</option>
+                </optgroup>
+                <optgroup label="Uncompressed">
+                  <option value="12">BGRA8888</option>
+                  <option value="0">RGBA8888</option>
+                  <option value="3">BGR888</option>
+                  <option value="2">RGB888</option>
+                  <option value="19">BGRA4444</option>
+                  <option value="21">BGRA5551</option>
+                  <option value="17">BGR565</option>
+                  <option value="6">IA88</option>
+                  <option value="5">I8</option>
+                </optgroup>
+              </select>
+            </label>
+            <label class="row" data-show="source">
+              <span>Quality</span>
+              <select name="quality">
+                <option value="fast">Fast</option>
+                <option value="normal" selected>Normal</option>
+                <option value="best">Best</option>
+              </select>
+            </label>
+            <label class="row row--range" data-show="one-bit">
+              <span>Alpha cut-off</span>
+              <input type="range" name="alphaThreshold" min="1" max="255" value="128" />
+              <output>128</output>
+            </label>
+            <label class="check" data-show="source">
+              <input type="checkbox" name="bleed" checked />Fix transparent edge fringes
+            </label>
+            <label class="check"
+              ><input type="checkbox" name="dither" checked />Dither limited colour
+              formats</label
+            >
+            <p class="note" data-show="source">
+              Auto uses DXT5 when the image has transparency. Uncompressed formats stay
+              sharp but are four to eight times bigger.
+            </p>
+            <p class="note" data-show="goldsrc">
+              GoldSrc sprays hold 255 colours plus one transparent colour. Pixels below
+              the cut-off become fully transparent.
+            </p>
+          </div>
+
+          <div
+            class="panel"
+            role="tabpanel"
+            id="panel-mipmaps"
+            aria-labelledby="tab-mipmaps"
+            hidden
+          >
+            <label class="check"
+              ><input type="checkbox" name="mipmaps" checked />Generate mipmaps</label
+            >
+            <label class="row" data-show="mipmaps">
+              <span>Filter</span>
+              <select name="mipFilter">
+                <option value="box">Box</option>
+                <option value="triangle">Triangle</option>
+                <option value="catrom">Catmull-Rom</option>
+                <option value="mitchell">Mitchell</option>
+                <option value="lanczos">Lanczos</option>
+                <option value="point">Point</option>
+              </select>
+            </label>
+            <label class="row" data-show="mipmaps">
+              <span>Sharpen</span>
+              <select name="mipSharpen">
+                <option value="none">None</option>
+                <option value="soft" selected>Sharpen Soft</option>
+                <option value="medium">Sharpen Medium</option>
+                <option value="strong">Sharpen Strong</option>
+                <option value="unsharp">Unsharp Mask</option>
+                <option value="smoothen">Smoothen</option>
+                <option value="contrastMore">Contrast More</option>
+                <option value="contrastLess">Contrast Less</option>
+                <option value="lighter">Lighter</option>
+                <option value="darker">Darker</option>
+              </select>
+            </label>
+            <div class="row" data-show="unsharp">
+              <span>Unsharp</span>
+              <div class="trio">
+                <label
+                  ><span class="dim">Radius</span
+                  ><input
+                    type="number"
+                    name="unsharpRadius"
+                    min="0.1"
+                    max="10"
+                    step="0.1"
+                    value="2"
+                /></label>
+                <label
+                  ><span class="dim">Amount</span
+                  ><input
+                    type="number"
+                    name="unsharpAmount"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value="0.5"
+                /></label>
+                <label
+                  ><span class="dim">Threshold</span
+                  ><input
+                    type="number"
+                    name="unsharpThreshold"
+                    min="0"
+                    max="255"
+                    value="0"
+                /></label>
+              </div>
+            </div>
+            <div
+              class="row"
+              role="radiogroup"
+              aria-labelledby="fade-label"
+              data-show="mipmaps"
+            >
+              <span id="fade-label">At a distance</span>
+              <div class="choices">
+                <label class="choice"
+                  ><input type="radio" name="fade" value="none" checked />Stay the
+                  same</label
+                >
+                <label class="choice"
+                  ><input type="radio" name="fade" value="out" />Fade out</label
+                >
+                <label class="choice"
+                  ><input type="radio" name="fade" value="image" />Change image</label
+                >
+              </div>
+            </div>
+            <label class="row" data-show="fade">
+              <span>From mipmap</span>
+              <select name="fadeLevel"></select>
+            </label>
+            <div class="row" data-show="fade-image">
+              <span>Far image</span>
+              <div class="far-image">
+                <canvas id="fade-thumb" width="40" height="40" hidden></canvas>
+                <button type="button" class="button" id="choose-fade">Browse...</button>
+              </div>
+            </div>
+            <p class="note" data-show="mipmaps">
+              Mipmaps are the smaller copies players see from further away. Use the mipmap
+              slider under the preview to check each one.
+            </p>
+          </div>
+
+          <div
+            class="panel"
+            role="tabpanel"
+            id="panel-animation"
+            aria-labelledby="tab-animation"
+            hidden
+          >
+            <div class="row" role="radiogroup" aria-labelledby="timing-label">
+              <span id="timing-label">Timing</span>
+              <div class="choices">
+                <label class="choice"
+                  ><input type="radio" name="timing" value="spray" checked />Match spray
+                  speed</label
+                >
+                <label class="choice"
+                  ><input type="radio" name="timing" value="all" />Use every frame</label
+                >
+              </div>
+            </div>
+            <div class="row">
+              <span>Frames</span>
+              <div class="trio">
+                <label
+                  ><span class="dim">First</span
+                  ><input type="number" name="start" min="1" value="1"
+                /></label>
+                <label
+                  ><span class="dim">Last</span
+                  ><input type="number" name="end" min="1" value="1"
+                /></label>
+                <label
+                  ><span class="dim">Every</span
+                  ><input type="number" name="step" min="1" value="1"
+                /></label>
+              </div>
+            </div>
+            <div class="row">
+              <label for="max-frames">Frame limit</label>
+              <div class="inline">
+                <input type="number" id="max-frames" name="maxFrames" min="0" value="0" />
+                <button type="button" class="button" id="fit-frames">Fit to limit</button>
+              </div>
+            </div>
+            <label class="check"
+              ><input type="checkbox" name="reverse" />Play backwards</label
+            >
+            <p class="note">
+              Sprays play at about 5 frames a second. Matching keeps the original speed by
+              skipping frames. A frame limit of 0 keeps them all.
+            </p>
+          </div>
+
+          <div
+            class="panel"
+            role="tabpanel"
+            id="panel-advanced"
+            aria-labelledby="tab-advanced"
+            hidden
+          >
+            <fieldset class="flags">
+              <legend>Flags</legend>
+              <label class="check"
+                ><input type="checkbox" name="flag" value="1" />Point Sample</label
+              >
+              <label class="check"
+                ><input type="checkbox" name="flag" value="2" />Trilinear</label
+              >
+              <label class="check"
+                ><input type="checkbox" name="flag" value="4" checked />Clamp S</label
+              >
+              <label class="check"
+                ><input type="checkbox" name="flag" value="8" checked />Clamp T</label
+              >
+              <label class="check"
+                ><input type="checkbox" name="flag" value="16" />Anisotropic</label
+              >
+              <label class="check"
+                ><input type="checkbox" name="flag" value="512" checked />No Level Of
+                Detail</label
+              >
+            </fieldset>
+            <label class="row">
+              <span>VTF version</span>
+              <select name="version">
+                <option value="5">7.5</option>
+                <option value="4">7.4</option>
+                <option value="3">7.3</option>
+                <option value="2" selected>7.2</option>
+                <option value="1">7.1</option>
+                <option value="0">7.0</option>
+              </select>
+            </label>
+            <label class="check"
+              ><input type="checkbox" name="thumbnail" checked />Thumbnail</label
+            >
+            <label class="check"
+              ><input type="checkbox" name="reflectivity" checked />Reflectivity</label
+            >
+            <p class="note">
+              No Level Of Detail keeps the spray sharp on low texture settings. Clamping
+              stops lines along the edges. Version 7.2 loads in every Source game.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <div class="window__buttons">
+        <button type="button" class="button" id="replace">Open...</button>
+        <label class="name" data-show="source">
+          <span>Name</span>
+          <input
+            type="text"
+            name="name"
+            value="my_spray"
+            spellcheck="false"
+            maxlength="48"
+          />
+        </label>
+        <span class="name" data-show="goldsrc">
+          <span class="dim">Saves as tempdecal.wad</span>
+        </span>
+        <button
+          type="button"
+          class="button"
+          id="download-vmt"
+          data-show="source"
+          disabled
+        >
+          Save VMT
+        </button>
+        <button
+          type="button"
+          class="button"
+          id="download-zip"
+          data-show="source"
+          disabled
+        >
+          Save ZIP
+        </button>
+        <button type="button" class="button button--default" id="download-spray" disabled>
+          Save VTF
+        </button>
+      </div>
+      <div class="window__statusbar">
+        <p class="window__status" id="status" role="status" aria-live="polite">
+          Your files never leave your computer.
+        </p>
+        <p class="window__credit">
+          <a
+            class="footer-face"
+            href="https://www.youtube.com/watch?v=Y6ljFaKRTrI"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Still alive"
+            ><img src="/jives.webp" alt="Face of Jives" width="18" height="18" /><img
+              src="/jives-alt.webp"
+              alt=""
+              aria-hidden="true"
+              width="18"
+              height="18"
+          /></a>
+          <span>Made by <a href="https://jamesiv.es">Jives</a></span>
+        </p>
+      </div>
+    </form>
+
+    <input
+      type="file"
+      id="file-input"
+      multiple
+      hidden
+      accept="image/*,video/*,.tga,.vtf,.wad"
+    />
+    <input type="file" id="fade-input" hidden accept="image/*,.tga,.vtf" />
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
