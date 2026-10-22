@@ -181,12 +181,17 @@ async function loadFiles(files: File[]): Promise<void> {
     byId('dropzone').hidden = true;
     byId('transport').hidden = false;
     byId('meter').hidden = false;
-    applyRecipe(form, guessRecipe(media), sourceInfo(), readForm(form).limit);
+    const recipe = guessRecipe(media);
+    applyRecipe(form, recipe, sourceInfo(), readForm(form).limit);
     const size = `${media.width} × ${media.height}`;
-    setStatus(
+    const loaded =
       frames.length > 1
         ? `Loaded ${media.name}: ${frames.length} frames at ${size}.`
-        : `Loaded ${media.name} (${size}).`,
+        : `Loaded ${media.name} (${size}).`;
+    setStatus(
+      state.source.hasAlpha
+        ? `${loaded} It has transparency, so its edges are cleaned up automatically.`
+        : loaded,
     );
     refresh();
   } catch (error) {

@@ -205,6 +205,60 @@ export function sharpen(
 }
 
 /**
+ * Recolours the partly transparent pixels along a cut-out's edge with the colour of
+ * the solid pixels next to them, working outwards one ring at a time for `width`
+ * rings. A cut-out's soft edge still carries some of the background it was cut
+ * from, which shows up as a light or dark halo; this removes it, much like
+ * Photoshop's Defringe. Alpha is left unchanged.
+ */
+export function defringe(image: FloatImage, width = 1): void {
+  const { width: columns, height: rows, data } = image;
+  const solid = 254.5 / 255;
+  const known = new Uint8Array(columns * rows);
+  for (let pixel = 0; pixel < known.length; pixel++) {
+    if (data[pixel * 4 + 3] >= solid) known[pixel] = 1;
+  }
+
+  for (let ring = 0; ring < width; ring++) {
+    const updates: [number, number, number, number][] = [];
+    for (let row = 0; row < rows; row++) {
+      for (let column = 0; column < columns; column++) {
+        const pixel = row * columns + column;
+        if (known[pixel] || data[pixel * 4 + 3] <= 0) continue;
+
+        let red = 0;
+        let green = 0;
+        let blue = 0;
+        let count = 0;
+        for (let rowStep = -1; rowStep <= 1; rowStep++) {
+          for (let columnStep = -1; columnStep <= 1; columnStep++) {
+            const neighbourRow = row + rowStep;
+            const neighbourColumn = column + columnStep;
+            if (neighbourRow < 0 || neighbourColumn < 0) continue;
+            if (neighbourRow >= rows || neighbourColumn >= columns) continue;
+            const neighbour = neighbourRow * columns + neighbourColumn;
+            if (!known[neighbour]) continue;
+            red += data[neighbour * 4];
+            green += data[neighbour * 4 + 1];
+            blue += data[neighbour * 4 + 2];
+            count++;
+          }
+        }
+        if (count > 0) updates.push([pixel, red / count, green / count, blue / count]);
+      }
+    }
+    if (!updates.length) break;
+    // Apply the whole ring at once so the result doesn't depend on scan order.
+    for (const [pixel, red, green, blue] of updates) {
+      data[pixel * 4] = red;
+      data[pixel * 4 + 1] = green;
+      data[pixel * 4 + 2] = blue;
+      known[pixel] = 1;
+    }
+  }
+}
+
+/**
  * Fills the colour of fully transparent pixels from their nearest visible
  * neighbours, one ring at a time. Stops white or black fringes appearing when the
  * game filters the texture or DXT compresses edge blocks.

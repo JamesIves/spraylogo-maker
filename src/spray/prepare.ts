@@ -1,4 +1,4 @@
-import { adjust, sharpen } from '../image/filters';
+import { adjust, defringe, sharpen } from '../image/filters';
 import { blit, createImage, type FloatImage, type RGBAImage } from '../image/image';
 import { resample } from '../image/resample';
 import type { SpraySettings } from './settings';
@@ -49,10 +49,11 @@ export function placeImage(
 }
 
 /**
- * Frames, colour adjusts and sharpens one source image at full spray size.
+ * Frames, defringes, colour adjusts and sharpens one source image at full spray size.
  */
 export function prepareImage(source: RGBAImage, settings: SpraySettings): FloatImage {
   const placed = placeImage(source, settings);
+  if (settings.defringe > 0) defringe(placed, settings.defringe);
   adjust(placed, settings.adjust);
   if (settings.imageSharpen <= 0) return placed;
   return sharpen(placed, 'unsharp', {

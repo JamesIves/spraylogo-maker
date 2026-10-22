@@ -133,6 +133,7 @@ export function readForm(form: HTMLFormElement): FormState {
       },
       fade: mipmaps ? (text('fade') as FadeMode) : 'none',
       fadeLevel: numberOf('fadeLevel', 1),
+      defringe: numberOf('defringe'),
       bleed: checked('bleed'),
       background: hexToRgb(text('background')),
       alphaThreshold: numberOf('alphaThreshold', 128),
@@ -236,8 +237,9 @@ function pixelArtSize(source: SourceInfo | undefined, engine: Engine): number {
 
 /**
  * Applies a starting point for each kind of spray: stills get mipmaps, animations
- * drop them to fit more frames, fades swap or clear the smaller mipmaps and pixel
- * art keeps hard edges. GoldSrc only supports stills and pixel art.
+ * drop mipmaps to fit more frames, fades swap or clear the smaller mipmaps and
+ * pixel art keeps hard edges. Any source with transparency also gets its cut-out
+ * edges cleaned up. GoldSrc sprays can't animate or fade.
  */
 export function applyRecipe(
   form: HTMLFormElement,
@@ -260,6 +262,9 @@ export function applyRecipe(
     fade: 'none',
     fit: 'cover',
     dither: true,
+    // Clean up cut-out edges whenever the source has transparency.
+    defringe: source?.hasAlpha ? '2' : '0',
+    bleed: true,
     maxFrames: '0',
     size: `${still}x${still}`,
   };

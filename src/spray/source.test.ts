@@ -102,6 +102,32 @@ describe('buildSourceSpray', () => {
     expect(result.bytes.length).toBe(estimateSize(settings, ImageFormat.BGRA8888, 1));
   });
 
+  it('removes a white halo from a cut-out when defringing', () => {
+    const image: RGBAImage = {
+      width: 4,
+      height: 1,
+      data: new Uint8ClampedArray([
+        255, 0, 0, 255, 255, 255, 255, 128, 0, 0, 0, 0, 0, 0, 0, 0,
+      ]),
+    };
+    const settings = settingsWith({
+      width: 4,
+      height: 1,
+      resizeFilter: 'point',
+      format: ImageFormat.BGRA8888,
+      mipmaps: false,
+    });
+    /**
+     * The edge pixel of the built spray, with or without defringing.
+     */
+    const edgeOf = (defringe: number): number[] => {
+      const vtf = readVtf(buildSourceSpray([image], { ...settings, defringe }).bytes);
+      return [...decodeVtfFrame(vtf, 0, 0).data.slice(4, 8)];
+    };
+    expect(edgeOf(0)).toEqual([255, 255, 255, 128]);
+    expect(edgeOf(1)).toEqual([255, 0, 0, 128]);
+  });
+
   it('keeps pixel art crisp with point sampling', () => {
     const image = solidImage(2, 2, [0, 0, 0, 255]);
     image.data.set([255, 255, 255, 255], 0);

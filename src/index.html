@@ -297,8 +297,18 @@
               <input type="range" name="alphaThreshold" min="1" max="255" value="128" />
               <output>128</output>
             </label>
+            <label class="row">
+              <span>Remove halos</span>
+              <select name="defringe">
+                <option value="0">Off</option>
+                <option value="1">1 pixel</option>
+                <option value="2">2 pixels</option>
+                <option value="4">4 pixels</option>
+              </select>
+            </label>
             <label class="check" data-show="source">
-              <input type="checkbox" name="bleed" checked />Fix transparent edge fringes
+              <input type="checkbox" name="bleed" checked />Fill colour under transparent
+              areas
             </label>
             <label class="check"
               ><input type="checkbox" name="dither" checked />Dither limited colour
@@ -307,6 +317,11 @@
             <p class="note" data-show="source">
               Auto uses DXT5 when the image has transparency. Uncompressed formats stay
               sharp but are four to eight times bigger.
+            </p>
+            <p class="note">
+              Cut-outs keep a little of their old background in their soft edges, which
+              shows as a halo; removing halos cleans that up. Filling colour under
+              transparent areas stops the game blending black or white into the edges.
             </p>
             <p class="note" data-show="goldsrc">
               GoldSrc sprays hold 255 colours plus one transparent colour. Pixels below

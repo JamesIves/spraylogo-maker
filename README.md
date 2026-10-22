@@ -18,10 +18,12 @@ Special thank you to all the past and present [GitHub Sponsors](https://github.c
 > [!TIP]
 > The spray types cover the common kinds of spray:
 >
-> - **Still image**: mipmaps keep it sharp up close and far away. Transparent images use DXT5 automatically.
+> - **Still image**: mipmaps keep it sharp up close and far away.
 > - **Animated**: frames are retimed to the game's fixed speed of about 5 frames a second. Use **Fit to limit** to drop frames evenly until it fits.
 > - **Fading**: from a chosen mipmap the spray either fades out or switches to a second image as players walk away.
 > - **Pixel art**: nearest neighbour scaling, uncompressed formats and point sampling keep hard pixel edges.
+>
+> Any spray type can be transparent. When the image has transparency, Source sprays use DXT5, halos left over from the image's old background are removed, and colour is filled in under transparent areas so the game doesn't blend black or white into the outline.
 
 ### Source Games
 

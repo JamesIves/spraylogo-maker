@@ -97,6 +97,11 @@ export interface SpraySettings {
    */
   fadeLevel: number;
   /**
+   * How many pixels into a cut-out's soft edge to recolour, removing halos left by
+   * its old background. 0 turns it off.
+   */
+  defringe: number;
+  /**
    * Whether to spread edge colours under transparent pixels to stop fringes.
    */
   bleed: boolean;
@@ -156,6 +161,7 @@ export const DEFAULT_SETTINGS: SpraySettings = {
   unsharp: { radius: 2, amount: 0.5, threshold: 0 },
   fade: 'none',
   fadeLevel: 1,
+  defringe: 0,
   bleed: true,
   background: [0, 0, 0],
   alphaThreshold: 128,
