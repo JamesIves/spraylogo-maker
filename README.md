@@ -25,6 +25,8 @@ Special thank you to all the past and present [GitHub Sponsors](https://github.c
 >
 > Any spray type can be transparent. When the image has transparency, Source sprays use DXT5, halos left over from the image's old background are removed, and colour is filled in under transparent areas so the game doesn't blend black or white into the outline.
 
+![Screenshot](./.github/docs/screenshot.png)
+
 ### Source Games
 
 In Team Fortress 2, open **Options**, go to **Multiplayer** and import the `.vtf` from under the spray preview. For other Source games, save the zip and copy its `materials` folder into the game's folder (for example `Counter-Strike Source/cstrike`), then pick the spray in **Options** > **Multiplayer**.
