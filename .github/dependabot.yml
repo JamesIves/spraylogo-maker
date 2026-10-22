@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
+      interval: quarterly
     groups:
       dev-dependencies:
         dependency-type: development
@@ -11,7 +11,8 @@ updates:
       # typescript-eslint supports TypeScript < 6.1; bump together by hand.
       - dependency-name: typescript
         update-types: ['version-update:semver-minor', 'version-update:semver-major']
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: quarterly

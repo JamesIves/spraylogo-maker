@@ -1,0 +1,69 @@
+name: Bug Report 🐝
+description: Found an issue? Report it here!
+title: 'bug 🐝: '
+labels: ['bug 🐝', 'triage ⚠️']
+assignees:
+  - JamesIves
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report.
+        Please provide as much detail as possible to help us fix the issue.
+
+        If a spray doesn't show up in game, check it's under the size limit shown in the app and that the server allows custom sprays before reporting.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Tell us what you see and what you expected to see.
+    validations:
+      required: true
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine
+      description: Which kind of spray were you making?
+      options:
+        - Source (VTF)
+        - GoldSrc (tempdecal.wad)
+      default: 0
+    validations:
+      required: true
+  - type: dropdown
+    id: spray-type
+    attributes:
+      label: Spray type
+      options:
+        - Still image
+        - Animated
+        - Fading
+        - Pixel art
+      default: 0
+    validations:
+      required: true
+  - type: input
+    id: game
+    attributes:
+      label: Game
+      description: Which game were you using the spray in?
+      placeholder: Team Fortress 2
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: Which browser and version were you using?
+      placeholder: Chrome 140 on Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: Source file
+      description: If you can, attach the image, GIF or video you were converting (or describe it, including its size and file type).
+  - type: textarea
+    id: console
+    attributes:
+      label: Console Errors
+      description: Any errors shown in the browser's developer console. This will be automatically formatted into code, so no need for backticks.
+      render: shell

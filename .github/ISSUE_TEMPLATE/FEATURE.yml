@@ -1,0 +1,32 @@
+name: Feature Request 🚀
+description: Have an idea that would make sprays easier to make? Suggest it here!
+title: 'feature 🚀: '
+labels: ['enhancement 🚀', 'triage ⚠️']
+assignees:
+  - JamesIves
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a feature.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: Describe what you're trying to make and what gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: How should it work?
+      description: Describe the change you'd like to see.
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Engine
+      description: Which kind of spray is this for?
+      multiple: true
+      options:
+        - Source (VTF)
+        - GoldSrc (tempdecal.wad)

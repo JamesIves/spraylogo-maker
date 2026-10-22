@@ -10,7 +10,7 @@ Special thank you to all the past and present [GitHub Sponsors](https://github.c
 
 ## Getting Started 🚀
 
-1. Open Spraylogo Maker and drop an image, GIF, video, TGA or existing spray onto the preview. Several images at once become an animation.
+1. Open [Spraylogo Maker](https://jamesiv.es/spraylogo-maker/) and drop an image, GIF, video, TGA or existing spray onto the preview. Several images at once become an animation.
 2. Pick the **Engine**: **Source** makes a VTF, **GoldSrc** makes a `tempdecal.wad`.
 3. Pick a **Spray type**. Each one sets sensible defaults, which you can tweak in the tabs.
 4. Keep the size meter under the line, then save.

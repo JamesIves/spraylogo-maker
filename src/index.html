@@ -1,16 +1,95 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Spraylogo Maker</title>
     <meta
       name="description"
-      content="Turn images, GIFs and videos into sprays for Source and GoldSrc games. Runs in your browser; nothing is uploaded."
+      content="Turn images, GIFs and videos into sprays for Source and GoldSrc games like Team Fortress 2 and Counter-Strike. Runs in your browser; nothing is uploaded."
     />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="James Ives" />
+    <meta name="application-name" content="Spraylogo Maker" />
     <meta name="theme-color" content="#16191b" />
+    <meta name="color-scheme" content="dark" />
+
+    <meta property="og:title" content="Spraylogo Maker" />
+    <meta
+      property="og:description"
+      content="Turn images, GIFs and videos into sprays for Source and GoldSrc games like Team Fortress 2 and Counter-Strike. Runs in your browser; nothing is uploaded."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jamesiv.es/spraylogo-maker/" />
+    <meta property="og:site_name" content="James Ives" />
+    <meta property="og:image" content="https://jamesiv.es/spraylogo-maker/meta.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="A sprayed Half-Life lambda over a faded City 17 street from Half-Life 2"
+    />
+    <meta property="og:locale" content="en_GB" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Spraylogo Maker" />
+    <meta
+      name="twitter:description"
+      content="Turn images, GIFs and videos into sprays for Source and GoldSrc games like Team Fortress 2 and Counter-Strike. Runs in your browser; nothing is uploaded."
+    />
+    <meta name="twitter:image" content="https://jamesiv.es/spraylogo-maker/meta.png" />
+    <meta
+      name="twitter:image:alt"
+      content="A sprayed Half-Life lambda over a faded City 17 street from Half-Life 2"
+    />
+
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/spray-icon.png" />
+    <link rel="canonical" href="https://jamesiv.es/spraylogo-maker/" />
+
+    <title>Spraylogo Maker</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "@id": "https://jamesiv.es/spraylogo-maker/#app",
+        "name": "Spraylogo Maker",
+        "description": "Turn images, GIFs and videos into sprays for Source and GoldSrc games, including Team Fortress 2, Counter-Strike: Source, Garry's Mod, Counter-Strike 1.6 and Half-Life. Makes VTF and tempdecal.wad files entirely in your browser, so your files never leave your computer.",
+        "url": "https://jamesiv.es/spraylogo-maker/",
+        "image": "https://jamesiv.es/spraylogo-maker/meta.png",
+        "inLanguage": "en-GB",
+        "isPartOf": {
+          "@type": "WebSite",
+          "@id": "https://jamesiv.es/#website",
+          "name": "James Ives",
+          "url": "https://jamesiv.es/"
+        },
+        "author": {
+          "@type": "Person",
+          "@id": "https://jamesiv.es/#person",
+          "name": "James Ives",
+          "alternateName": "Jives",
+          "url": "https://jamesiv.es"
+        },
+        "sameAs": ["https://github.com/JamesIves/spraylogo-maker"],
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript and a modern web browser.",
+        "isAccessibleForFree": true,
+        "featureList": [
+          "Source engine sprays (VTF) for Team Fortress 2, Counter-Strike: Source, Garry's Mod and more",
+          "GoldSrc sprays (tempdecal.wad) for Counter-Strike 1.6, Half-Life and more",
+          "Animated sprays from GIFs, videos and image sequences",
+          "Fading sprays that change or vanish at a distance",
+          "Pixel art sprays with hard edges",
+          "Automatic clean-up of transparent edges"
+        ],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
     <h1 class="logo">
@@ -27,6 +106,17 @@
             <div class="viewer__empty" id="dropzone">
               <p>Drop an image, GIF or video here.</p>
               <p class="dim">PNG, JPG, GIF, WebP, TGA, MP4, WebM, VTF or WAD</p>
+              <p class="dim">
+                Making an animation?
+                <button
+                  type="button"
+                  class="tip"
+                  aria-label="Help"
+                  data-tip="Open a GIF or video, or select several images at once. Images become frames in file name order, so number them (frame01.png, frame02.png and so on)."
+                >
+                  ?
+                </button>
+              </p>
               <button type="button" class="button" id="choose-files">Open...</button>
             </div>
             <canvas id="preview" hidden></canvas>
@@ -64,6 +154,14 @@
                 </select>
               </label>
               <span data-show="goldsrc" id="meter-pixel-limit"></span>
+              <button
+                type="button"
+                class="tip"
+                aria-label="Help"
+                data-tip="The game silently ignores sprays over the limit. For animations, use fewer frames, a smaller size or turn off mipmaps to fit more frames in."
+              >
+                ?
+              </button>
             </div>
             <span class="meter__bar"
               ><span class="meter__fill" id="meter-fill"></span
@@ -150,15 +248,25 @@
                 <option value="goldsrc">GoldSrc (tempdecal.wad)</option>
               </select>
             </label>
-            <label class="row">
-              <span>Spray type</span>
-              <select name="recipe">
+            <div class="row">
+              <span class="row__label"
+                ><label for="recipe">Spray type</label>
+                <button
+                  type="button"
+                  class="tip"
+                  aria-label="Help"
+                  data-tip="Still image: one picture. Animated: loops a GIF, video or set of images at about 5 frames a second. Fading: changes or vanishes as players walk away. Pixel art: keeps hard pixel edges."
+                >
+                  ?
+                </button></span
+              >
+              <select name="recipe" id="recipe">
                 <option value="still">Still image</option>
                 <option value="animated" data-engine="source">Animated</option>
                 <option value="fading" data-engine="source">Fading</option>
                 <option value="pixel">Pixel art</option>
               </select>
-            </label>
+            </div>
             <label class="row">
               <span>Size</span>
               <select name="size"></select>
@@ -444,7 +552,17 @@
             hidden
           >
             <div class="row" role="radiogroup" aria-labelledby="timing-label">
-              <span id="timing-label">Timing</span>
+              <span class="row__label"
+                ><span id="timing-label">Timing</span>
+                <button
+                  type="button"
+                  class="tip"
+                  aria-label="Help"
+                  data-tip="Sprays always play at about 5 frames a second. Match spray speed skips frames so the animation keeps its original speed. Use every frame keeps them all, so it plays slower."
+                >
+                  ?
+                </button></span
+              >
               <div class="choices">
                 <label class="choice"
                   ><input type="radio" name="timing" value="spray" checked />Match spray
@@ -456,7 +574,17 @@
               </div>
             </div>
             <div class="row">
-              <span>Frames</span>
+              <span class="row__label"
+                >Frames
+                <button
+                  type="button"
+                  class="tip"
+                  aria-label="Help"
+                  data-tip="Choose which part of the source to use, by frame number. Every keeps every nth frame: 2 halves the frame count, 3 keeps a third."
+                >
+                  ?
+                </button></span
+              >
               <div class="trio">
                 <label
                   ><span class="dim">First</span
@@ -473,7 +601,17 @@
               </div>
             </div>
             <div class="row">
-              <label for="max-frames">Frame limit</label>
+              <span class="row__label"
+                ><label for="max-frames">Frame limit</label>
+                <button
+                  type="button"
+                  class="tip"
+                  aria-label="Help"
+                  data-tip="Animated sprays have to fit the size limit. Fit to limit works out how many frames fit and drops the rest evenly. 0 keeps every frame."
+                >
+                  ?
+                </button></span
+              >
               <div class="inline">
                 <input type="number" id="max-frames" name="maxFrames" min="0" value="0" />
                 <button type="button" class="button" id="fit-frames">Fit to limit</button>
@@ -590,14 +728,16 @@
             target="_blank"
             rel="noopener noreferrer"
             title="Still alive"
-            ><img src="/jives.webp" alt="Face of Jives" width="18" height="18" /><img
-              src="/jives-alt.webp"
-              alt=""
-              aria-hidden="true"
-              width="18"
-              height="18"
+            ><img src="/jives.webp" alt="Face of Jives" width="18" height="18"
           /></a>
           <span>Made by <a href="https://jamesiv.es">Jives</a></span>
+          <a class="github-link" href="https://github.com/JamesIves/spraylogo-maker"
+            ><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+              /></svg
+            >GitHub</a
+          >
         </p>
       </div>
     </form>

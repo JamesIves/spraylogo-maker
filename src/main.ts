@@ -22,6 +22,7 @@ import {
 } from './ui/form';
 import { Preview, previewTexture } from './ui/preview';
 import { setTabVisible, setupTabs } from './ui/tabs';
+import { setupTooltips } from './ui/tooltips';
 import { createThumbnail, drawThumbnail } from './ui/thumbnails';
 import { createSprayVmt, sanitizeName } from './vtf/vmt';
 
@@ -186,7 +187,7 @@ async function loadFiles(files: File[]): Promise<void> {
     const size = `${media.width} × ${media.height}`;
     const loaded =
       frames.length > 1
-        ? `Loaded ${media.name}: ${frames.length} frames at ${size}.`
+        ? `Loaded ${media.name}: ${frames.length} frames at ${size}. Choose which frames to use in the Animation tab.`
         : `Loaded ${media.name} (${size}).`;
     setStatus(
       state.source.hasAlpha
@@ -446,5 +447,6 @@ byId('download-zip').addEventListener('click', () => {
 });
 
 setupTabs(form.querySelector<HTMLElement>('[role="tablist"]')!);
+setupTooltips(document);
 applyRecipe(form, 'still', undefined, 'modern');
 syncVisibility(form);

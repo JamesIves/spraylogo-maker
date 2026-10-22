@@ -59,6 +59,7 @@ ESLint enforces these, so `npm run lint` will tell you when something's off.
 - Functions declare their return types, `any` isn't allowed, and arrays are written as `Type[]`.
 - Names say what they hold. Single letter names aren't allowed; prefer `row` and `column` to `x` and `y`, and `channel` to `c`.
 - Tests live next to the code they cover, named `*.test.ts`.
+- Dependencies are pinned to exact versions. `.npmrc` sets `save-exact`, so `npm install <package>` does this for you. Dependabot proposes updates once a quarter.
 
 ## Architecture 🏛️
 
