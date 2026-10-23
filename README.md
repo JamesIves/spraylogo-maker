@@ -43,5 +43,6 @@ Save the spray and put `tempdecal.wad` in the game's folder, such as `cstrike` f
 
 ## Acknowledgements 📚
 
+- [Valve Developer Wiki](https://developer.valvesoftware.com/wiki/VTF_(Valve_Texture_Format)), for the VTF and VMT file specs.
 - [VTFLib and VTFEdit](https://github.com/NeilJed/VTFLib), the reference for the VTF header layout, formats and flags.
 - [cs16forge's GoldSrc format notes](https://github.com/cs16forge/goldsrc-formats), for the `tempdecal.wad` layout and size rules.
