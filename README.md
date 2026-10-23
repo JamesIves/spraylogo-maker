@@ -41,11 +41,8 @@ Save the spray and put `tempdecal.wad` in the game's folder, such as `cstrike` f
 > [!NOTE]
 > GoldSrc sprays are a single image with up to 255 colours and one transparent colour, and no more than 14,336 pixels. Some servers only accept 64 × 64, which works everywhere.
 
-## Contributing 🛠️
-
-Development setup, the project's structure and coding standards are in [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## Acknowledgements 📚
 
+- [Valve Developer Wiki](https://developer.valvesoftware.com/wiki/VTF_(Valve_Texture_Format)), for the VTF and VMT file specs.
 - [VTFLib and VTFEdit](https://github.com/NeilJed/VTFLib), the reference for the VTF header layout, formats and flags.
 - [cs16forge's GoldSrc format notes](https://github.com/cs16forge/goldsrc-formats), for the `tempdecal.wad` layout and size rules.
