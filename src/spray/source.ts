@@ -1,4 +1,4 @@
-import { bleedEdges, clearAlpha, flatten, sharpen } from '../image/filters';
+import { bleedEdges, flatten, scaleAlpha, sharpen } from '../image/filters';
 import {
   cloneImage,
   hasTransparency,
@@ -60,20 +60,51 @@ function finishLevel(
 }
 
 /**
- * Builds every mip level for a frame. From `fadeLevel` down, levels either turn
- * transparent or come from the second image, which is how fading sprays work.
+ * How much of a mip level is left when fading out: all of it before `fadeLevel`,
+ * then less at each level until none is left at `fadeEndLevel`.
+ */
+export function fadeOpacity(level: number, settings: SpraySettings): number {
+  if (settings.fade !== 'out' || level < settings.fadeLevel) return 1;
+  const end = Math.max(settings.fadeLevel, settings.fadeEndLevel);
+  return Math.max(0, (end - level) / (end - settings.fadeLevel + 1));
+}
+
+/**
+ * The image a mip level is built from: the last far image whose start level it has
+ * reached, or the spray itself.
+ */
+function levelSource(
+  level: number,
+  top: FloatImage,
+  farTops: FloatImage[],
+  settings: SpraySettings,
+): FloatImage {
+  let source = top;
+  let reached = 0;
+  farTops.forEach((far, index) => {
+    const start = settings.fadeImageLevels[index] ?? Infinity;
+    if (start <= level && start >= reached) {
+      source = far;
+      reached = start;
+    }
+  });
+  return source;
+}
+
+/**
+ * Builds every mip level for a frame. Fading sprays either fade the smaller levels
+ * out or build them from far away images instead.
  */
 function mipChain(
   top: FloatImage,
-  fadeTop: FloatImage | undefined,
+  farTops: FloatImage[],
   settings: SpraySettings,
   mips: number,
   keepAlpha: boolean,
 ): FloatImage[] {
   const chain: FloatImage[] = [];
   for (let level = 0; level < mips; level++) {
-    const fading = settings.fade !== 'none' && level >= settings.fadeLevel;
-    const source = fading && fadeTop ? fadeTop : top;
+    const source = levelSource(level, top, farTops, settings);
     let image: FloatImage;
     if (level === 0) {
       image = cloneImage(source);
@@ -84,7 +115,8 @@ function mipChain(
         image = sharpen(image, settings.mipSharpen, settings.unsharp);
       }
     }
-    if (fading && settings.fade === 'out') clearAlpha(image);
+    const opacity = fadeOpacity(level, settings);
+    if (opacity < 1) scaleAlpha(image, opacity);
     chain.push(finishLevel(image, settings, keepAlpha));
   }
   return chain;
@@ -152,24 +184,25 @@ function buildThumbnail(chain: FloatImage[], settings: SpraySettings): VtfThumbn
  * Converts source frames into a VTF spray for Source games.
  * @param frames Source images, one per animation frame.
  * @param settings Conversion settings.
- * @param fadeImage Second image for the `image` fade mode.
+ * @param farImages Far away images for the `image` fade mode, in the same order as
+ * `settings.fadeImageLevels`.
  * @param onProgress Called after each frame is encoded.
  */
 export function buildSourceSpray(
   frames: RGBAImage[],
   settings: SpraySettings,
-  fadeImage?: RGBAImage,
+  farImages: RGBAImage[] = [],
   onProgress?: (done: number, total: number) => void,
 ): SprayResult {
   const tops = frames.map((frame) => prepareImage(frame, settings));
-  const fadeTop =
-    settings.fade === 'image' && fadeImage
-      ? prepareImage(fadeImage, settings)
-      : undefined;
+  const farTops =
+    settings.fade === 'image' && settings.mipmaps
+      ? farImages.map((image) => prepareImage(image, settings))
+      : [];
   const hasAlpha =
     settings.fade === 'out' ||
     tops.some(hasTransparency) ||
-    (fadeTop !== undefined && settings.mipmaps && hasTransparency(fadeTop));
+    farTops.some(hasTransparency);
 
   const format = resolveFormat(settings.format, hasAlpha);
   const keepAlpha = FORMAT_INFO[format].alphaBits > 0;
@@ -178,7 +211,7 @@ export function buildSourceSpray(
   let firstChain: FloatImage[] = [];
 
   tops.forEach((top, frame) => {
-    const chain = mipChain(top, fadeTop, settings, mips, keepAlpha);
+    const chain = mipChain(top, farTops, settings, mips, keepAlpha);
     if (frame === 0) firstChain = chain;
     chain.forEach((image, level) =>
       levels[level].push(encodeLevel(image, format, settings)),

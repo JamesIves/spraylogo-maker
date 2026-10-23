@@ -527,17 +527,30 @@
                 >
               </div>
             </div>
-            <label class="row" data-show="fade">
-              <span>From mipmap</span>
-              <select name="fadeLevel"></select>
+            <label class="row" data-show="fade-out">
+              <span>Starts at</span>
+              <select name="fadeLevel" data-levels></select>
             </label>
-            <div class="row" data-show="fade-image">
-              <span>Far image</span>
-              <div class="far-image">
-                <canvas id="fade-thumb" width="40" height="40" hidden></canvas>
-                <button type="button" class="button" id="choose-fade">Browse...</button>
+            <label class="row" data-show="fade-out">
+              <span>Gone by</span>
+              <select name="fadeEndLevel" data-levels></select>
+            </label>
+            <p class="note" data-show="fade-out">
+              Fades evenly between the two. Pick the same level for both to vanish all at
+              once.
+            </p>
+            <div class="row row--wide" data-show="fade-image">
+              <span>Far images</span>
+              <div class="far-images">
+                <ol class="far-list" id="far-list"></ol>
+                <button type="button" class="button" id="choose-fade">
+                  Add image...
+                </button>
               </div>
             </div>
+            <p class="note" data-show="fade-image">
+              Each image shows from its level onwards, until the next one takes over.
+            </p>
             <p class="note" data-show="mipmaps">
               Mipmaps are the smaller copies players see from further away. Use the mipmap
               slider under the preview to check each one.
@@ -749,7 +762,7 @@
       hidden
       accept="image/*,video/*,.tga,.vtf,.wad"
     />
-    <input type="file" id="fade-input" hidden accept="image/*,.tga,.vtf" />
+    <input type="file" id="fade-input" multiple hidden accept="image/*,.tga,.vtf" />
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

@@ -365,8 +365,9 @@ export function flatten(
 }
 
 /**
- * Makes every pixel fully transparent while keeping its colour.
+ * Multiplies every pixel's alpha by `opacity` while keeping its colour, so 0 makes
+ * the image fully transparent.
  */
-export function clearAlpha(image: FloatImage): void {
-  for (let alpha = 3; alpha < image.data.length; alpha += 4) image.data[alpha] = 0;
+export function scaleAlpha(image: FloatImage, opacity: number): void {
+  for (let alpha = 3; alpha < image.data.length; alpha += 4) image.data[alpha] *= opacity;
 }

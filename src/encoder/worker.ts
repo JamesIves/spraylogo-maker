@@ -17,17 +17,31 @@ interface SourcesRequest {
 }
 
 /**
- * Stores (or clears) the far away image used by fading sprays.
+ * Adds a far away image for fading sprays to the end of the list.
  */
-interface FadeRequest {
+interface AddFarImageRequest {
   /**
    * Message type.
    */
-  type: 'fade';
+  type: 'add-far';
   /**
-   * The far away image, or null to clear it.
+   * The far away image.
    */
-  image: RGBAImage | null;
+  image: RGBAImage;
+}
+
+/**
+ * Removes a far away image from the list.
+ */
+interface RemoveFarImageRequest {
+  /**
+   * Message type.
+   */
+  type: 'remove-far';
+  /**
+   * Position of the image in the list.
+   */
+  index: number;
 }
 
 /**
@@ -55,7 +69,8 @@ interface EncodeRequest {
 /**
  * Messages the page sends to the worker.
  */
-export type WorkerRequest = SourcesRequest | FadeRequest | EncodeRequest;
+export type WorkerRequest =
+  SourcesRequest | AddFarImageRequest | RemoveFarImageRequest | EncodeRequest;
 
 /**
  * Reports how many frames of a job are done.
@@ -122,7 +137,7 @@ export type WorkerResponse = ProgressResponse | DoneResponse | ErrorResponse;
 
 // Frames live here so each re-encode only has to send settings.
 let sources: RGBAImage[] = [];
-let fadeImage: RGBAImage | null = null;
+const farImages: RGBAImage[] = [];
 
 /**
  * Posts a response back to the page, transferring any buffers rather than copying.
@@ -139,7 +154,7 @@ function encode({ id, settings, frames }: EncodeRequest): void {
     const result = buildSpray(
       frames.map((frame) => sources[frame]),
       settings,
-      fadeImage ?? undefined,
+      farImages,
       (done, total) => reply({ type: 'progress', id, done, total }),
     );
     reply({ type: 'done', id, result }, [result.bytes.buffer]);
@@ -150,6 +165,7 @@ function encode({ id, settings, frames }: EncodeRequest): void {
 
 self.addEventListener('message', ({ data }: MessageEvent<WorkerRequest>) => {
   if (data.type === 'sources') sources = data.frames;
-  else if (data.type === 'fade') fadeImage = data.image;
+  else if (data.type === 'add-far') farImages.push(data.image);
+  else if (data.type === 'remove-far') farImages.splice(data.index, 1);
   else encode(data);
 });

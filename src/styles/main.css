@@ -600,10 +600,34 @@ a:hover {
   width: 6em;
 }
 
+.far-images {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.far-list {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.far-list:empty {
+  display: none;
+}
+
 .far-image {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.far-image select {
+  min-width: 0;
+  flex: 1;
 }
 
 .far-image canvas {
@@ -882,5 +906,10 @@ input[type='color']::-moz-color-swatch {
 
   .tabs {
     flex-wrap: wrap;
+  }
+
+  /* Rows with several controls on one line put their label above them. */
+  .row--wide {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

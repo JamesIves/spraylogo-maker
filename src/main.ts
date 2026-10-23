@@ -2,7 +2,7 @@ import './styles/main.css';
 
 import { selectFrames } from './animation/frames';
 import { SprayEncoder } from './encoder/encoder';
-import { hasTransparency } from './image/image';
+import { hasTransparency, type RGBAImage } from './image/image';
 import { decodeFiles, decodeStill, type SourceMedia } from './input/decode';
 import { SIZE_LIMITS, maxFrames } from './spray/budget';
 import type { SprayResult } from './spray/settings';
@@ -23,7 +23,7 @@ import {
 import { Preview, previewTexture } from './ui/preview';
 import { setTabVisible, setupTabs } from './ui/tabs';
 import { setupTooltips } from './ui/tooltips';
-import { createThumbnail, drawThumbnail } from './ui/thumbnails';
+import { createThumbnail } from './ui/thumbnails';
 import { createSprayVmt, sanitizeName } from './vtf/vmt';
 
 /**
@@ -60,10 +60,6 @@ interface PageState {
    */
   excluded: Set<number>;
   /**
-   * Whether a far away image has been chosen for fading.
-   */
-  hasFadeImage: boolean;
-  /**
    * The most recently built spray.
    */
   result?: SprayResult;
@@ -83,6 +79,8 @@ const busy = byId('busy');
 const dropTarget = byId('drop-target');
 const fileInput = byId<HTMLInputElement>('file-input');
 const fadeInput = byId<HTMLInputElement>('fade-input');
+// One row per far away image, in the same order as the worker's list.
+const farList = byId<HTMLOListElement>('far-list');
 const saveButton = byId<HTMLButtonElement>('download-spray');
 const meterElements: MeterElements = {
   meter: byId('meter'),
@@ -94,7 +92,6 @@ const meterElements: MeterElements = {
 const state: PageState = {
   thumbnails: [],
   excluded: new Set(),
-  hasFadeImage: false,
   nameEdited: false,
 };
 
@@ -142,7 +139,7 @@ function sourceInfo(): SourceInfo | undefined {
     height: source.height,
     hasAlpha: source.hasAlpha,
     frameCount: selectFrames(source.durations, all).length,
-    hasFadeImage: state.hasFadeImage,
+    hasFadeImage: farList.childElementCount > 0,
   };
 }
 
@@ -201,24 +198,75 @@ async function loadFiles(files: File[]): Promise<void> {
 }
 
 /**
- * Loads the image a fading spray changes to at a distance.
+ * Builds the list row for a far away image: its thumbnail, the mip level it starts
+ * at (one after the last image's, to begin with) and a remove button.
  */
-async function loadFadeImage(file: File): Promise<void> {
+function farImageRow(image: RGBAImage, name: string): HTMLLIElement {
+  const levels = farList.querySelectorAll<HTMLSelectElement>('select[data-levels]');
+  const last = levels[levels.length - 1] as HTMLSelectElement | undefined;
+  // Rows added together don't have their options yet, so fall back to data-initial.
+  const lastLevel = last ? Number(last.value || last.dataset.initial) : 0;
+  const select = document.createElement('select');
+  select.name = 'fadeImageLevel';
+  select.dataset.levels = '';
+  select.dataset.initial = String(lastLevel + 1);
+  select.setAttribute('aria-label', `Start level for ${name}`);
+
+  const cross = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  cross.setAttribute('viewBox', '0 0 16 16');
+  cross.setAttribute('aria-hidden', 'true');
+  cross.innerHTML =
+    '<path d="M3.5 2.4 8 6.9l4.5-4.5 1.1 1.1L9.1 8l4.5 4.5-1.1 1.1L8 9.1l-4.5 4.5-1.1-1.1L6.9 8 2.4 3.5z" />';
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'button button--icon';
+  remove.dataset.removeFar = '';
+  remove.title = 'Remove';
+  remove.setAttribute('aria-label', `Remove ${name}`);
+  remove.append(cross);
+
+  const row = document.createElement('li');
+  row.className = 'far-image';
+  row.title = name;
+  row.append(createThumbnail(image, 40), select, remove);
+  return row;
+}
+
+/**
+ * Adds images a fading spray changes to at a distance, each starting a level
+ * further away than the last.
+ */
+async function addFarImages(files: File[]): Promise<void> {
   try {
-    const image = await decodeStill(file, 1024);
-    const thumbnail = byId<HTMLCanvasElement>('fade-thumb');
-    drawThumbnail(image, thumbnail);
-    thumbnail.hidden = false;
-    encoder.setFadeImage(image);
-    state.hasFadeImage = true;
-    byId('choose-fade').textContent = 'Change...';
+    for (const file of files) {
+      const image = await decodeStill(file, 1024);
+      // Draw the thumbnail before the pixels are handed to the worker.
+      farList.append(farImageRow(image, file.name));
+      encoder.addFarImage(image);
+    }
+    updateFadeLevels(form);
     setField(form, 'mipmaps', true);
     setField(form, 'fade', 'image');
-    setStatus(`Far away image set to ${file.name}.`);
-    refresh();
+    setStatus(
+      files.length > 1
+        ? `Added ${files.length} far away images.`
+        : `Added ${files[0].name} as a far away image.`,
+    );
   } catch (error) {
     setStatus((error as Error).message, 'error');
   }
+  refresh();
+}
+
+/**
+ * Removes a far away image's row, and the image itself from the worker.
+ */
+function removeFarImage(row: HTMLLIElement): void {
+  encoder.removeFarImage([...farList.children].indexOf(row));
+  row.remove();
+  byId('choose-fade').focus();
+  setStatus(`Removed ${row.title}.`);
+  refresh();
 }
 
 /**
@@ -300,8 +348,8 @@ async function encode(): Promise<void> {
     );
     return;
   }
-  if (settings.fade === 'image' && !state.hasFadeImage) {
-    setStatus('Choose a far away image to change to, or pick another fade option.');
+  if (settings.fade === 'image' && !farList.childElementCount) {
+    setStatus('Add a far away image to change to, or pick another fade option.');
   }
   if (settings.engine === 'goldsrc' && frames.length > 1) {
     setStatus("GoldSrc sprays can't animate, so only the first frame is used.");
@@ -380,9 +428,9 @@ form.addEventListener('input', (event) => {
   }
   if (target.name === 'recipe' || target.name === 'engine') {
     applyRecipe(form, recipe, sourceInfo(), limit);
-    if (recipe === 'fading' && !state.hasFadeImage) {
+    if (recipe === 'fading' && !farList.childElementCount) {
       setStatus(
-        'Fading out at a distance. Choose a far away image to change to a different picture instead.',
+        'Fading out at a distance. Add far away images in the Mipmaps tab to change to different pictures instead.',
       );
     }
   }
@@ -401,9 +449,15 @@ fileInput.addEventListener('change', () => {
   fileInput.value = '';
 });
 fadeInput.addEventListener('change', () => {
-  const [file] = fadeInput.files ?? [];
-  if (file) void loadFadeImage(file);
+  const files = [...(fadeInput.files ?? [])];
+  if (files.length) void addFarImages(files);
   fadeInput.value = '';
+});
+farList.addEventListener('click', (event) => {
+  const row = (event.target as HTMLElement)
+    .closest('button[data-remove-far]')
+    ?.closest<HTMLLIElement>('li');
+  if (row) removeFarImage(row);
 });
 
 dropTarget.addEventListener('dragover', (event) => {

@@ -4,7 +4,7 @@ import { ImageFormat, TextureFlag } from '../vtf/format';
 import { decodeVtfFrame, readVtf } from '../vtf/vtf';
 import { estimateSize } from './budget';
 import { DEFAULT_SETTINGS, type SpraySettings } from './settings';
-import { buildSourceSpray } from './source';
+import { buildSourceSpray, fadeOpacity } from './source';
 
 /**
  * A test image filled with one colour.
@@ -70,8 +70,8 @@ describe('buildSourceSpray', () => {
     expect(decodeVtfFrame(vtf, 1, 0).data[1]).toBeGreaterThan(245);
   });
 
-  it('fades out from the chosen mip level', () => {
-    const settings = settingsWith({ fade: 'out', fadeLevel: 1 });
+  it('cuts straight to transparent when a fade starts and ends on one level', () => {
+    const settings = settingsWith({ fade: 'out', fadeLevel: 1, fadeEndLevel: 1 });
     const vtf = readVtf(
       buildSourceSpray([solidImage(64, 64, [255, 255, 255, 255])], settings).bytes,
     );
@@ -80,13 +80,50 @@ describe('buildSourceSpray', () => {
     expect(decodeVtfFrame(vtf, 0, 1).data[3]).toBe(0);
   });
 
-  it('switches to a second image at a distance', () => {
-    const settings = settingsWith({ fade: 'image', fadeLevel: 2 });
+  it('fades out gradually between the start and end levels', () => {
+    const settings = settingsWith({
+      fade: 'out',
+      fadeLevel: 2,
+      fadeEndLevel: 4,
+      format: ImageFormat.BGRA8888,
+    });
+    const vtf = readVtf(
+      buildSourceSpray([solidImage(64, 64, [255, 255, 255, 255])], settings).bytes,
+    );
+    const alphas = [0, 1, 2, 3, 4, 5].map(
+      (level) => decodeVtfFrame(vtf, 0, level).data[3],
+    );
+    expect(alphas).toEqual([255, 255, 170, 85, 0, 0]);
+  });
+
+  it('treats a fade that ends before it starts as a cut at the start', () => {
+    const settings = settingsWith({ fade: 'out', fadeLevel: 3, fadeEndLevel: 1 });
+    expect([2, 3, 4].map((level) => fadeOpacity(level, settings))).toEqual([1, 0, 0]);
+  });
+
+  it('switches to a far away image from its level', () => {
+    const settings = settingsWith({ fade: 'image', fadeImageLevels: [2] });
     const red = solidImage(64, 64, [255, 0, 0, 255]);
     const blue = solidImage(64, 64, [0, 0, 255, 255]);
-    const vtf = readVtf(buildSourceSpray([red], settings, blue).bytes);
+    const vtf = readVtf(buildSourceSpray([red], settings, [blue]).bytes);
     expect(decodeVtfFrame(vtf, 0, 1).data[0]).toBeGreaterThan(200);
     expect(decodeVtfFrame(vtf, 0, 2).data[2]).toBeGreaterThan(200);
+  });
+
+  it('switches between several far away images, whatever order they were added in', () => {
+    const settings = settingsWith({ fade: 'image', fadeImageLevels: [3, 1] });
+    const red = solidImage(64, 64, [255, 0, 0, 255]);
+    const green = solidImage(64, 64, [0, 255, 0, 255]);
+    const blue = solidImage(64, 64, [0, 0, 255, 255]);
+    const vtf = readVtf(buildSourceSpray([red], settings, [blue, green]).bytes);
+    /**
+     * The brightest channel (0 red, 1 green, 2 blue) of a mip level's first pixel.
+     */
+    const colourAt = (level: number): number => {
+      const pixel = [...decodeVtfFrame(vtf, 0, level).data.slice(0, 3)];
+      return pixel.indexOf(Math.max(...pixel));
+    };
+    expect([0, 1, 2, 3, 4].map(colourAt)).toEqual([0, 1, 1, 2, 2]);
   });
 
   it('writes resource entries for 7.3 and later', () => {

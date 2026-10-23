@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bleedEdges, clearAlpha, defringe, flatten } from './filters';
+import { bleedEdges, defringe, flatten, scaleAlpha } from './filters';
 import { createImage } from './image';
 
 describe('filters', () => {
@@ -32,10 +32,12 @@ describe('filters', () => {
     expect([...image.data]).toEqual([0.5, 0.5, 0.5, 1]);
   });
 
-  it('clears alpha but keeps colour', () => {
-    const image = createImage(1, 1);
-    image.data.set([0.25, 0.5, 0.75, 1]);
-    clearAlpha(image);
-    expect([...image.data]).toEqual([0.25, 0.5, 0.75, 0]);
+  it('scales alpha but keeps colour', () => {
+    const image = createImage(2, 1);
+    image.data.set([0.25, 0.5, 0.75, 1, 0.25, 0.5, 0.75, 0.5]);
+    scaleAlpha(image, 0.5);
+    expect([...image.data]).toEqual([0.25, 0.5, 0.75, 0.5, 0.25, 0.5, 0.75, 0.25]);
+    scaleAlpha(image, 0);
+    expect(image.data[3]).toBe(0);
   });
 });

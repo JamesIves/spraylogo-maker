@@ -74,10 +74,18 @@ export class SprayEncoder {
   }
 
   /**
-   * Sets (or clears) the far away image used by fading sprays.
+   * Adds a far away image for fading sprays. Like source frames, its buffer is
+   * transferred.
    */
-  setFadeImage(image: RGBAImage | null): void {
-    this.post({ type: 'fade', image }, image ? [image.data.buffer] : []);
+  addFarImage(image: RGBAImage): void {
+    this.post({ type: 'add-far', image }, [image.data.buffer]);
+  }
+
+  /**
+   * Removes the far away image at `index`.
+   */
+  removeFarImage(index: number): void {
+    this.post({ type: 'remove-far', index });
   }
 
   /**

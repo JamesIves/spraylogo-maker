@@ -15,7 +15,7 @@ export type Engine = 'source' | 'goldsrc';
 export type FitMode = 'cover' | 'contain' | 'stretch';
 
 /**
- * What happens at a distance: nothing, fade out, or switch to a second image.
+ * What happens at a distance: nothing, fade out, or switch to other images.
  */
 export type FadeMode = 'none' | 'out' | 'image';
 
@@ -93,9 +93,19 @@ export interface SpraySettings {
    */
   fade: FadeMode;
   /**
-   * First mip level that fades.
+   * First mip level that fades out.
    */
   fadeLevel: number;
+  /**
+   * Mip level the spray has fully faded out by. Levels in between fade evenly, and
+   * the same level as `fadeLevel` cuts straight to transparent.
+   */
+  fadeEndLevel: number;
+  /**
+   * First mip level for each far away image, in the order they were added. Each
+   * level uses the last image it has reached.
+   */
+  fadeImageLevels: number[];
   /**
    * How many pixels into a cut-out's soft edge to recolour, removing halos left by
    * its old background. 0 turns it off.
@@ -161,6 +171,8 @@ export const DEFAULT_SETTINGS: SpraySettings = {
   unsharp: { radius: 2, amount: 0.5, threshold: 0 },
   fade: 'none',
   fadeLevel: 1,
+  fadeEndLevel: 1,
+  fadeImageLevels: [],
   defringe: 0,
   bleed: true,
   background: [0, 0, 0],

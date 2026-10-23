@@ -59,7 +59,7 @@ export interface SourceInfo {
    */
   hasAlpha: boolean;
   /**
-   * Whether a far away image has been chosen for fading.
+   * Whether any far away images have been added for fading.
    */
   hasFadeImage: boolean;
 }
@@ -102,6 +102,7 @@ export function readForm(form: HTMLFormElement): FormState {
   const format = text('format');
   const engine = text('engine') as Engine;
   const mipmaps = engine === 'source' && checked('mipmaps');
+  const fadeLevel = numberOf('fadeLevel', 1);
 
   return {
     recipe: text('recipe') as Recipe,
@@ -132,7 +133,9 @@ export function readForm(form: HTMLFormElement): FormState {
         threshold: numberOf('unsharpThreshold'),
       },
       fade: mipmaps ? (text('fade') as FadeMode) : 'none',
-      fadeLevel: numberOf('fadeLevel', 1),
+      fadeLevel,
+      fadeEndLevel: numberOf('fadeEndLevel', fadeLevel),
+      fadeImageLevels: data.getAll('fadeImageLevel').map(Number),
       defringe: numberOf('defringe'),
       bleed: checked('bleed'),
       background: hexToRgb(text('background')),
@@ -273,7 +276,13 @@ export function applyRecipe(
     const size = source ? animatedSize(source, limit) : 128;
     Object.assign(values, { mipmaps: false, size: `${size}x${size}` });
   } else if (chosen === 'fading') {
-    values.fade = source?.hasFadeImage ? 'image' : 'out';
+    // Fade out gradually over the next few levels by default.
+    const lastLevel = mipCount(still, still) - 1;
+    Object.assign(values, {
+      fade: source?.hasFadeImage ? 'image' : 'out',
+      fadeLevel: '1',
+      fadeEndLevel: String(Math.min(3, lastLevel)),
+    });
   } else if (chosen === 'pixel') {
     const size = pixelArtSize(source, engine);
     Object.assign(values, {
@@ -287,38 +296,50 @@ export function applyRecipe(
   }
 
   fillSizeOptions(sizeSelect(form), engine, String(values.size));
+  updateFadeLevels(form);
   for (const [name, value] of Object.entries(values)) {
     if (name !== 'size') setField(form, name, value);
   }
   setFlag(form, TextureFlag.POINTSAMPLE, chosen === 'pixel');
-  updateFadeLevels(form);
 }
 
 /**
- * Rebuilds the fade level list for the current size, keeping the selection if it
- * still exists.
+ * Rebuilds every mip level list (`select[data-levels]`) for the current size. Each
+ * keeps its level, or `data-initial` when it has none yet, moved to the last level
+ * if the new size doesn't go that far.
  */
 export function updateFadeLevels(form: HTMLFormElement): void {
-  const select = form.elements.namedItem('fadeLevel') as HTMLSelectElement;
   const [width, height] = sizeSelect(form).value.split('x').map(Number);
-  const previous = select.value || '1';
-  const levels = Array.from(
-    { length: Math.max(0, mipCount(width, height) - 1) },
-    (_, index) => {
+  const lastLevel = Math.max(1, mipCount(width, height) - 1);
+  for (const select of form.querySelectorAll<HTMLSelectElement>('select[data-levels]')) {
+    const previous = Number(select.value || select.dataset.initial || 1);
+    const levels = Array.from({ length: lastLevel }, (_, index) => {
       const level = index + 1;
       const [levelWidth, levelHeight] = mipSize(width, height, level);
       return new Option(`Level ${level} (${levelWidth} × ${levelHeight})`, String(level));
-    },
-  );
-  select.replaceChildren(...levels);
-  select.value = select.querySelector(`option[value="${previous}"]`) ? previous : '1';
+    });
+    select.replaceChildren(...levels);
+    select.value = String(Math.min(previous, lastLevel));
+  }
 }
 
 /**
- * Shows or hides controls that only matter for certain settings, and keeps the
- * value labels next to sliders up to date.
+ * Stops a fade out ending before it starts, by ruling out earlier end levels.
+ */
+function keepFadeEndAfterStart(form: HTMLFormElement): void {
+  const start = Number((form.elements.namedItem('fadeLevel') as HTMLSelectElement).value);
+  const end = form.elements.namedItem('fadeEndLevel') as HTMLSelectElement;
+  for (const option of end.options) option.disabled = Number(option.value) < start;
+  if (Number(end.value) < start) end.value = String(start);
+}
+
+/**
+ * Shows or hides controls that only matter for certain settings, keeps the value
+ * labels next to sliders up to date, and keeps the fade out end at or after its
+ * start.
  */
 export function syncVisibility(form: HTMLFormElement): void {
+  keepFadeEndAfterStart(form);
   const { settings } = readForm(form);
   const source = settings.engine === 'source';
   const oneBitFormats: (string | number)[] = [
@@ -330,7 +351,7 @@ export function syncVisibility(form: HTMLFormElement): void {
     goldsrc: !source,
     mipmaps: settings.mipmaps,
     unsharp: settings.mipmaps && settings.mipSharpen === 'unsharp',
-    fade: settings.fade !== 'none',
+    'fade-out': settings.fade === 'out',
     'fade-image': settings.fade === 'image',
     'one-bit': !source || oneBitFormats.includes(settings.format),
   };
