@@ -417,6 +417,9 @@ function saveSpray(): void {
 
 form.addEventListener('input', (event) => {
   const target = event.target as HTMLInputElement;
+  // Controls without a name, like the preview's mipmap slider, aren't settings, so
+  // they never need the spray rebuilt.
+  if (!target.name) return;
   const { limit, recipe } = readForm(form);
   if (target.name === 'name') {
     state.nameEdited = true;
