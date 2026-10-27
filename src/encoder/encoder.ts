@@ -55,7 +55,7 @@ export class SprayEncoder {
   /**
    * Starts the worker. `onProgress` hears about each frame as it's encoded.
    */
-  constructor(onProgress: ProgressListener = () => {}) {
+  public constructor(onProgress: ProgressListener = () => {}) {
     this.onProgress = onProgress;
     this.worker.addEventListener('message', ({ data }: MessageEvent<WorkerResponse>) =>
       this.handle(data),
@@ -66,7 +66,7 @@ export class SprayEncoder {
    * Hands source frames to the worker. Their buffers are transferred, not copied,
    * so the frames can't be used here afterwards.
    */
-  setSources(frames: RGBAImage[]): void {
+  public setSources(frames: RGBAImage[]): void {
     this.post(
       { type: 'sources', frames },
       frames.map((frame) => frame.data.buffer),
@@ -77,21 +77,21 @@ export class SprayEncoder {
    * Adds a far away image for fading sprays. Like source frames, its buffer is
    * transferred.
    */
-  addFarImage(image: RGBAImage): void {
+  public addFarImage(image: RGBAImage): void {
     this.post({ type: 'add-far', image }, [image.data.buffer]);
   }
 
   /**
    * Removes the far away image at `index`.
    */
-  removeFarImage(index: number): void {
+  public removeFarImage(index: number): void {
     this.post({ type: 'remove-far', index });
   }
 
   /**
    * Builds a spray from the given stored frames with the given settings.
    */
-  encode(settings: SpraySettings, frames: number[]): Promise<SprayResult | null> {
+  public encode(settings: SpraySettings, frames: number[]): Promise<SprayResult | null> {
     return new Promise((resolve, reject) => {
       this.waiting?.resolve(null);
       this.waiting = { settings, frames, resolve, reject };

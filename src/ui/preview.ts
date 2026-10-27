@@ -109,7 +109,7 @@ export class Preview {
   /**
    * Hooks up the play button and mipmap slider.
    */
-  constructor(elements: PreviewElements) {
+  public constructor(elements: PreviewElements) {
     this.elements = elements;
     elements.play.addEventListener('click', () => this.setPlaying(!this.playing));
     elements.mipSlider.addEventListener('input', () => {
@@ -122,7 +122,7 @@ export class Preview {
    * Swaps in a newly encoded spray, keeping the current frame and mip level where
    * possible.
    */
-  show(texture: PreviewTexture): void {
+  public show(texture: PreviewTexture): void {
     const { canvas, mipSlider, play } = this.elements;
     this.texture = texture;
     this.cache.clear();
